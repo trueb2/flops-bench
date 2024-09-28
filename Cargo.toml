@@ -1,0 +1,16 @@
+[package]
+name = "flops-bench"
+version = "0.1.0"
+edition = "2021"
+
+[dependencies]
+blas-src = { version = "0.10.0", features = ["accelerate"] }
+ndarray = { version = "0.16.1", features = ["blas"] }
+# ndarray = "0.16.1"
+
+[dev-dependencies]
+divan = "0.1.14"
+
+[[bench]]
+name = "flops"
+harness = false

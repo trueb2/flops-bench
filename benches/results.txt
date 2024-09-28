@@ -1,0 +1,110 @@
+
+
+    const M10: usize = 10_000_000;
+    #[divan::bench]
+    fn ndarray_dot32(b: Bencher) {
+        b.with_inputs(|| (Array::from_vec(vec![0f32; M10]), Array::from_vec(vec![0f32; M10])))
+            .bench_values(|(a, b)| {
+                a.dot(&b)
+            });
+    }
+
+    #[divan::bench]
+    fn chunks_dot32(b: Bencher) {
+        b.with_inputs(|| (vec![0f32; M10], vec![0f32; M10]))
+            .bench_values(|(a, b)| {
+                a.chunks_exact(32)
+                    .zip(b.chunks_exact(32))
+                    .map(|(a, b)| a.iter().zip(b.iter()).map(|(a, b)| a * b).sum::<f32>())
+                    .sum::<f32>()
+            });
+    }
+
+    #[divan::bench]
+    fn iter_dot32(b: Bencher) {
+        b.with_inputs(|| (vec![0f32; M100], vec![0f32; M100]))
+            .bench_values(|(a, b)| {
+                a.iter().zip(b.iter()).map(|(a, b)| a * b).sum::<f32>()
+            });
+    }
+
+
+
+    ---- Rust ----
+    Timer precision: 41 ns
+    flops             fastest       │ slowest       │ median        │ mean          │ samples │ iters
+    ├─ chunks_dot32   3.903 ms      │ 9.96 ms       │ 4.366 ms      │ 4.411 ms      │ 100     │ 100
+    ├─ chunks_dot64   4.697 ms      │ 16.29 ms      │ 5.472 ms      │ 5.516 ms      │ 100     │ 100
+    ├─ iter_dot32     10.37 ms      │ 11.36 ms      │ 10.93 ms      │ 10.86 ms      │ 100     │ 100
+    ├─ iter_dot64     11.68 ms      │ 13.07 ms      │ 12.43 ms      │ 12.4 ms       │ 100     │ 100
+    ├─ ndarray_dot32  1.984 ms      │ 2.91 ms       │ 2.44 ms       │ 2.381 ms      │ 100     │ 100
+    ╰─ ndarray_dot64  4.021 ms      │ 5.718 ms      │ 5.141 ms      │ 4.965 ms      │ 100     │ 100
+
+    ---- Julia ----
+    native_dot32
+    BenchmarkTools.Trial: 3046 samples with 1 evaluation.
+    Range (min … max):  1.275 ms …  12.242 ms  ┊ GC (min … max): 0.00% … 0.00%
+    Time  (median):     1.623 ms               ┊ GC (median):    0.00%
+    Time  (mean ± σ):   1.633 ms ± 341.705 μs  ┊ GC (mean ± σ):  0.00% ± 0.00%
+
+    ▇                           █  ▃▃
+    █▄▃▃▃▂▂▁▂▁▂▁▁▁▁▁▂▁▁▂▁▂▂▂▂▂▃▄█▇▆██▅▃▃▃▃▃▂▃▂▂▂▃▂▃▃▂▄▃▃█▆▇▆▃▂▁ ▂
+    1.28 ms         Histogram: frequency by time        1.92 ms <
+
+    Memory estimate: 0 bytes, allocs estimate: 0.
+    native_dot64
+    BenchmarkTools.Trial: 964 samples with 1 evaluation.
+    Range (min … max):  4.736 ms …   5.617 ms  ┊ GC (min … max): 0.00% … 0.00%
+    Time  (median):     5.286 ms               ┊ GC (median):    0.00%
+    Time  (mean ± σ):   5.179 ms ± 230.997 μs  ┊ GC (mean ± σ):  0.00% ± 0.00%
+
+        ▁▅▁                                        ▃█ ▁▃▁  ▄▅▃
+    ▄▅███▇▄▃▃▁▃▂▄▃▄▄▄▂▃▁▃▂▂▃▄▄▄▃▅▄▄▃▄▃▇▅▆▅▃▄▄▄▄▅███████▇████▇▄▃ ▄
+    4.74 ms         Histogram: frequency by time        5.46 ms <
+
+    Memory estimate: 0 bytes, allocs estimate: 0.
+    simd_dot32
+    BenchmarkTools.Trial: 2721 samples with 1 evaluation.
+    Range (min … max):  1.558 ms …   2.169 ms  ┊ GC (min … max): 0.00% … 0.00%
+    Time  (median):     1.818 ms               ┊ GC (median):    0.00%
+    Time  (mean ± σ):   1.830 ms ± 142.826 μs  ┊ GC (mean ± σ):  0.00% ± 0.00%
+
+    ▇                           ▁                         ▇█
+    █▅▄▃▂▂▂▁▁▁▁▁▁▂▁▁▁▂▂▂▂▂▂▂▂▂▄▄█▇████▃▃▃▃▃▂▂▃▂▃▂▃▂▂▂▃▃▃▃▅███▅▂ ▃
+    1.56 ms         Histogram: frequency by time        2.01 ms <
+
+    Memory estimate: 0 bytes, allocs estimate: 0.
+    simd_dot64
+    BenchmarkTools.Trial: 1399 samples with 1 evaluation.
+    Range (min … max):  3.123 ms …  22.887 ms  ┊ GC (min … max): 0.00% … 0.00%
+    Time  (median):     3.564 ms               ┊ GC (median):    0.00%
+    Time  (mean ± σ):   3.567 ms ± 586.002 μs  ┊ GC (mean ± σ):  0.00% ± 0.00%
+
+    ▁                                          ▂█▄
+    █▆▅▆▅▄▅▃▃▂▃▄▄▄██▆▅▄▄▄▃▃▄▂▂▂▂▅█▆▅▆▄▃▂▃▂▂▃▃▂▄███▅▆▄▄▃▃▂▂▃▂▄▅▃ ▃
+    3.12 ms         Histogram: frequency by time        3.99 ms <
+
+    Memory estimate: 0 bytes, allocs estimate: 0.
+    iter_dot32
+    BenchmarkTools.Trial: 524 samples with 1 evaluation.
+    Range (min … max):  9.302 ms …  10.941 ms  ┊ GC (min … max): 0.00% … 0.00%
+    Time  (median):     9.566 ms               ┊ GC (median):    0.00%
+    Time  (mean ± σ):   9.549 ms ± 144.503 μs  ┊ GC (mean ± σ):  0.00% ± 0.00%
+
+                                █▃▂
+    ▆▅▄▃▄▁▃▃▂▃▂▃▃▃▂▅▅▄▆▅▅▄▅█▇▇█████▆▆▄▃▃▃▄▃▂▂▂▃▂▂▂▁▁▂▂▃▂▂▁▁▂▂▁▂ ▃
+    9.3 ms          Histogram: frequency by time        9.89 ms <
+
+    Memory estimate: 0 bytes, allocs estimate: 0.
+    iter_dot64
+    BenchmarkTools.Trial: 519 samples with 1 evaluation.
+    Range (min … max):  9.310 ms …  9.867 ms  ┊ GC (min … max): 0.00% … 0.00%
+    Time  (median):     9.666 ms              ┊ GC (median):    0.00%
+    Time  (mean ± σ):   9.640 ms ± 84.481 μs  ┊ GC (mean ± σ):  0.00% ± 0.00%
+
+                                            ▁▆▇█
+    ▃▁▂▁▁▁▂▁▂▂▂▂▁▁▂▃▂▃▃▄▂▃▄▅▃▃▅▄▄▄▄▆▆▅▆▅▇█▅▇████▇▆▄▃▄▄▁▂▃▂▁▂▁▂ ▃
+    9.31 ms        Histogram: frequency by time        9.83 ms <
+
+    Memory estimate: 0 bytes, allocs estimate: 0.
+
