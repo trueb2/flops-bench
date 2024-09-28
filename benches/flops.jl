@@ -1,6 +1,6 @@
 using BenchmarkTools, LinearAlgebra
 
-const M100 = 10_000_000
+const M10 = 10_000_000
 
 function native_dot32(a, b)
     return dot(a, b)
@@ -27,17 +27,17 @@ function simd_dot64(a, b)
 end
 
 function iter_dot32(a, b)
-    sum(a[i] * b[i] for i in 1:M100)
+    sum(a[i] * b[i] for i in 1:M10)
 end
 
 function iter_dot64(a, b)
-    sum(a[i] * b[i] for i in 1:M100)
+    sum(a[i] * b[i] for i in 1:M10)
 end
 
-a32 = zeros(Float32, M100)
-b32 = zeros(Float32, M100)
-a64 = zeros(Float64, M100)
-b64 = zeros(Float64, M100)
+a32 = zeros(Float32, M10)
+b32 = zeros(Float32, M10)
+a64 = zeros(Float64, M10)
+b64 = zeros(Float64, M10)
 
 println("native_dot32")
 display(@benchmark native_dot32($a32, $b32))
