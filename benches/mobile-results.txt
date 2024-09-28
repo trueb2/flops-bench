@@ -1,0 +1,68 @@
+
+
+    const M10: usize = 10_000_000;
+    #[divan::bench]
+    fn ndarray_dot32(b: Bencher) {
+        b.with_inputs(|| (Array::from_vec(vec![0f32; M10]), Array::from_vec(vec![0f32; M10])))
+            .bench_values(|(a, b)| {
+                a.dot(&b)
+            });
+    }
+
+    #[divan::bench]
+    fn chunks_dot32(b: Bencher) {
+        b.with_inputs(|| (vec![0f32; M10], vec![0f32; M10]))
+            .bench_values(|(a, b)| {
+                a.chunks_exact(32)
+                    .zip(b.chunks_exact(32))
+                    .map(|(a, b)| a.iter().zip(b.iter()).map(|(a, b)| a * b).sum::<f32>())
+                    .sum::<f32>()
+            });
+    }
+
+    #[divan::bench]
+    fn iter_dot32(b: Bencher) {
+        b.with_inputs(|| (vec![0f32; M10], vec![0f32; M10]))
+            .bench_values(|(a, b)| {
+                a.iter().zip(b.iter()).map(|(a, b)| a * b).sum::<f32>()
+            });
+    }
+
+
+
+    ---- Rust ----
+    Timer precision: 41 ns (100 samples)
+    flops             fast    │ slow    │ median  │ mean
+    ├─ chunks_dot32   3.903 ms│ 9.96 ms │ 4.366 ms│ 4.411 ms
+    ├─ chunks_dot64   4.697 ms│ 16.29 ms│ 5.472 ms│ 5.516 ms
+    ├─ iter_dot32     10.37 ms│ 11.36 ms│ 10.93 ms│ 10.86 ms
+    ├─ iter_dot64     11.68 ms│ 13.07 ms│ 12.43 ms│ 12.4 ms
+    ├─ ndarray_dot32  1.984 ms│ 2.91 ms │ 2.44 ms │ 2.381 ms
+    ╰─ ndarray_dot64  4.021 ms│ 5.718 ms│ 5.141 ms│ 4.965 ms
+
+    ---- Julia ----
+    native_dot32:
+    Median: 1.623 ms, Mean: 1.633 ms ± 341.705 μs
+    Range: 1.275 ms - 12.242 ms
+
+    native_dot64:
+    Median: 5.286 ms, Mean: 5.179 ms ± 230.997 μs
+    Range: 4.736 ms - 5.617 ms
+
+    simd_dot32:
+    Median: 1.818 ms, Mean: 1.830 ms ± 142.826 μs
+    Range: 1.558 ms - 2.169 ms
+
+    simd_dot64:
+    Median: 3.564 ms, Mean: 3.567 ms ± 586.002 μs
+    Range: 3.123 ms - 22.887 ms
+
+    iter_dot32:
+    Median: 9.566 ms, Mean: 9.549 ms ± 144.503 μs
+    Range: 9.302 ms - 10.941 ms
+
+    iter_dot64:
+    Median: 9.666 ms, Mean: 9.640 ms ± 84.481 μs
+    Range: 9.310 ms - 9.867 ms
+
+    All: 0 bytes, 0 allocs
